@@ -57,7 +57,7 @@ function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 function team(id){return db.teams.find(t=>t.id===id)}
 function teamLabel(id){const t=team(id);return t?t.name:'Unknown team'}
 function playersFor(teamId){return db.players.filter(p=>p.teamId===teamId)}
-function getMatch(){if(!db.match)db.match=newMatch(db.teams[0]?.id,db.teams[1]?.id,db.settings.overs);db.match.overs=Number(db.match.overs)||Number(db.settings.overs)||5;db.match.innings?.forEach(i=>{if(!Number(i.overs))i.overs=db.match.overs});return db.match}ettings.overs)||5;db.match.innings?.forEach(i=>{if(!Number(i.overs))i.overs=db.match.overs});return db.match}
+function getMatch(){if(!db.match)db.match=newMatch(db.teams[0]?.id,db.teams[1]?.id,db.settings.overs);db.match.overs=Number(db.match.overs)||Number(db.settings.overs)||5;db.match.innings?.forEach(i=>{if(!Number(i.overs))i.overs=db.match.overs});return db.match})||Number(db.settings.overs)||5;db.match.innings?.forEach(i=>{if(!Number(i.overs))i.overs=db.match.overs});return db.match}ettings.overs)||5;db.match.innings?.forEach(i=>{if(!Number(i.overs))i.overs=db.match.overs});return db.match}
 function blankInnings(teamId,oppId){return {teamId,oppId,runs:0,wickets:0,balls:0,batters:{},bowlers:{},striker:null,nonStriker:null,bowler:null,history:[],extras:{wide:0,noball:0,bye:0,legbye:0,penalty:0},completed:false}}
 function newMatch(a,b,overs){return {id:uid(),title:'Friendly Match',overs:Number(overs)||5,inningsNo:1,target:null,innings:[blankInnings(a,b)],status:'live',result:''}}
 function inns(){return getMatch().innings[getMatch().inningsNo-1]}
