@@ -1,42 +1,40 @@
-# AGCC Scorer — Cricket Tournament Web App
+# AGCC Scorer — AGCC 2026/2027
 
-Mobile-first cricket scoring and tournament management starter for **Arati Gram Cricket Carnival**. Runs as a static website and can be hosted on GitHub Pages.
+Mobile-first cricket tournament scorer for GitHub Pages, with Supabase Auth, shared cloud scoreboard state and Realtime updates.
 
-## Included
-- Live score panel, overs, target, current run rate and ball-by-ball history
-- Batter figures: runs, balls, fours, sixes, strike rate, out/not out
-- Bowler figures: overs, runs, wickets and economy
-- Wide, No Ball, Bye, Leg Bye, penalty, wicket, undo and strike swap
-- Teams, squads, player roles and Playing XI selection
-- Fixtures and loading a fixture into live scorer
-- Basic points table (win 2, tie/no result 1)
-- Admin settings, JSON export/import and reset
-- Share score text using device share sheet or clipboard
-- Supabase starter SQL schema
+## Features
+- Live scoreboard, overs, run rate, target, ball-by-ball history
+- Batter and bowler scorecards
+- Runs 0–6, wides, no-balls, byes, leg-byes, penalty, wicket-type selection
+- Undo last recorded action (current browser session)
+- Team and player management, Playing XI selection
+- Fixtures, results and points table
+- Share score, export/import JSON backup
+- Supabase email/password admin login; only `app_metadata.role = admin` can write shared cloud state
+- Supabase Realtime updates for visitors viewing the same scoreboard
 
-## Run locally
-Open `index.html` in a browser. No build step is required. Data is saved in the current browser using localStorage.
+## Before uploading to GitHub Pages
+1. Open `config.js`.
+2. Keep the provided Supabase URL. Replace `PASTE_YOUR_EXISTING_SUPABASE_PUBLISHABLE_KEY_HERE` with the **publishable/anon key** from Supabase Project Settings → API Keys. Never use a `service_role` or secret key in browser code.
+3. Confirm `public.app_state` exists, RLS is enabled, and its SELECT policy is public while INSERT/UPDATE policies allow only authenticated users whose `app_metadata.role` is `admin`.
+4. In Supabase Auth, create the admin user. In that user's **app_metadata** set `role` to `admin` (not user-editable `user_metadata`).
+5. Ensure `app_state` is included in the `supabase_realtime` publication.
+6. Upload all six files (`index.html`, `style.css`, `app.js`, `config.js`, `supabase-schema.sql`, `README.md`) to the repository root. Commit changes, then open the GitHub Pages URL.
+7. Open Admin → Admin Login and sign in. On first admin sign-in, if no cloud snapshot exists, the current app state is uploaded as the initial shared snapshot.
 
-## Publish with GitHub Pages
-1. Create a GitHub repository, e.g. `agcc-scorer`.
-2. Upload every file from this folder to the repository root.
-3. Open **Settings → Pages**.
-4. Choose **Deploy from a branch**, branch `main`, folder `/(root)`, then Save.
-5. Wait for the deployment URL.
+## Important data behaviour
+- `app_state` is the shared cloud snapshot. Visitors can read it and receive Realtime updates; only an admin account can save changes to cloud.
+- A visitor's local browser may still hold its own cache. Admin sign-in pulls the current cloud snapshot.
+- The supplied database schema creates the underlying cricket tables and `app_state`; this frontend currently uses `app_state` as its shared application snapshot rather than writing each delivery into the normalized `teams/players/matches/innings/deliveries` tables.
+- Wicket type is recorded. For Run Out/Mankad, confirm the dismissed batter using the batter selector; advanced run-out crossing/strike logic is not yet a full official scorer implementation.
+- Undo history is kept in memory and resets on page refresh. Export a JSON backup before major changes.
+- External Supabase JS CDN and Google Fonts require an internet connection.
 
-## Important limitations
-- **Local mode is the default.** Scores and teams live in the browser that entered them. A share link does not sync the live score to other devices.
-- The current UI is a usable starter, not an official scorebook: run-outs, retired hurt, no-ball + bat runs in one combined action, over-by-over bowler changes, strike rotation nuances, and detailed NRR calculations need further development.
-- Points table currently determines wins from completed fixtures; NRR is a placeholder.
-- The Admin page is not password protected. Do not expose sensitive operations on a public website.
-- `config.js` is a placeholder. The SQL schema is provided for a Supabase database, but this frontend does **not yet sync records to Supabase**. Add authenticated database integration and proper Row Level Security before claiming shared live scoring.
-- Never put a Supabase `service_role` key or any secret in GitHub Pages code. Browser apps may only use the public anon/publishable key with correct RLS policies.
+## If Supabase login fails
+- Confirm the publishable/anon key is copied correctly into `config.js`.
+- Confirm email/password login is enabled and the user exists.
+- Check that `app_metadata.role` is exactly `admin` for the scorer account.
+- Check RLS policies on `app_state`; do not disable RLS to make the app work.
 
-## Supabase setup (database schema only)
-1. Create a project in Supabase.
-2. Open SQL Editor and run `supabase-schema.sql`.
-3. Keep RLS enabled. The included policies allow public SELECT only; add authenticated admin policies for writes.
-4. To enable actual shared live sync, the application code must be extended to read/write teams, players, matches, innings and deliveries through Supabase Auth and the JS client. That integration is not active in this starter.
-
-## Tournament defaults
-Preloaded teams are sample AGCC team names. Edit or delete them and create your real teams and players in the Teams & Players tab.
+## GitHub Pages
+Repository → Settings → Pages → Deploy from a branch → `main` → `/(root)` → Save.
