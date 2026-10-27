@@ -2,5 +2,5 @@
 // Never paste a service_role or secret key into this file.
 window.AGCC_CONFIG = {
   supabaseUrl: "https://dfvluucxfhjqcxqlpmuu.supabase.co",
-  supabaseAnonKey: "PASTE_YOUR_EXISTING_SUPABASE_PUBLISHABLE_KEY_HERE"
+  supabaseAnonKey: "sb_publishable_3FmxAcxI2HGFLhSbUiBz9w_Zf9xyP0a"
 };
