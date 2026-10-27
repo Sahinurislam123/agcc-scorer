@@ -29,12 +29,11 @@ async function initCloud(){
   const {data:{session}}=await cloudClient.auth.getSession();
   cloudSession=session;
   setAuthStatus(session?(session.user?.app_metadata?.role==='admin'?'ADMIN SIGNED IN':'SIGNED IN · READ ONLY'):'NOT SIGNED IN');
-  if(session) await pullCloudState();
-  else await pullPublicCloudState();
+  render(); if(session) await pullCloudState(); else await pullPublicCloudState();
   cloudClient.auth.onAuthStateChange(async (_event,sessionNow)=>{
     cloudSession=sessionNow;
     setAuthStatus(sessionNow?(sessionNow.user?.app_metadata?.role==='admin'?'ADMIN SIGNED IN':'SIGNED IN · READ ONLY'):'NOT SIGNED IN');
-    if(sessionNow) await pullCloudState();
+    render(); if(sessionNow) await pullCloudState(); else await pullPublicCloudState();
   });
   cloudChannel=cloudClient.channel('agcc-app-state').on('postgres_changes',{event:'*',schema:'public',table:'app_state',filter:'id=eq.main'},payload=>{
     if(payload.new?.state){cloudApplying=true;db=payload.new.state;localStorage.setItem(KEY,JSON.stringify(db));render();cloudApplying=false;}
@@ -52,6 +51,13 @@ async function pullCloudState(){
   if(data?.state){cloudApplying=true;db=data.state;localStorage.setItem(KEY,JSON.stringify(db));render();cloudApplying=false;}
   else if(cloudSession?.user?.app_metadata?.role==='admin'){await pushCloudState();}
 }
+function isCloudConfigured(){const c=window.AGCC_CONFIG||{};return !!(c.supabaseUrl&&c.supabaseAnonKey&&!c.supabaseAnonKey.includes('PASTE_')&&window.supabase?.createClient)}
+function isAdmin(){return !!(cloudSession?.user?.app_metadata?.role==='admin')}
+function requireAdmin(){if(isCloudConfigured()&&!isAdmin()){toast('স্কোর/সেটিংস পরিবর্তন করতে Admin Login প্রয়োজন');return false}return true}
+// Prevent write actions in the scorer unless the signed-in Supabase user has admin role.
+document.addEventListener('click',e=>{const target=e.target.closest('[data-run],[data-extra],#wicketBtn,#undoBtn,#swapStrikeBtn,#endInningsBtn,#newMatchBtn,#clearHistoryBtn,#resetAllBtn,[data-del-team],[data-del-player],[data-start-fixture],[data-del-fixture]');if(target&&!requireAdmin()){e.preventDefault();e.stopImmediatePropagation()}},true);
+document.addEventListener('submit',e=>{if(['teamForm','playerForm','fixtureForm','settingsForm'].includes(e.target?.id)&&!requireAdmin()){e.preventDefault();e.stopImmediatePropagation()}},true);
+document.addEventListener('change',e=>{if(['batTeam','bowlTeam','strikerSelect','nonStrikerSelect','bowlerSelect','importFile'].includes(e.target?.id)||e.target?.matches('[data-xi]')){if(!requireAdmin()){e.preventDefault();e.stopImmediatePropagation()}}},true);
 function toast(msg){const el=$('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),2300)}
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function team(id){return db.teams.find(t=>t.id===id)}
@@ -85,7 +91,7 @@ document.querySelectorAll('[data-run],[data-extra],#wicketBtn').forEach(el=>el.d
 function renderTeams(){ $('teamsList').innerHTML=db.teams.map(t=>`<div class="entity"><div class="entity-main"><strong>${esc(t.name)}</strong><small>${esc(t.short)} · ${playersFor(t.id).length} players</small></div><button data-del-team="${t.id}">Delete</button></div>`).join('')||'<p class="muted">No teams yet.</p>';const tid=$('squadTeam').value||db.teams[0]?.id;const list=playersFor(tid);$('squadList').innerHTML=list.map(p=>`<div class="entity"><div class="entity-main"><strong>${esc(p.name)}</strong><small>${esc(p.role)}</small></div><label class="xi"><input type="checkbox" data-xi="${p.id}" ${p.xi?'checked':''}> XI</label><button data-del-player="${p.id}">Delete</button></div>`).join('')||'<p class="muted">Add players to build the squad.</p>'}
 function renderFixtures(){ $('fixturesList').innerHTML=db.fixtures.map(f=>`<div class="entity fixture-card"><div class="fixture-info"><strong>${esc(f.title)} · ${f.overs} overs</strong><small>${esc(teamLabel(f.a))} vs ${esc(teamLabel(f.b))} · ${esc(f.status)}${f.result?' · '+esc(f.result):''}</small></div><div class="fixture-actions"><button class="primary" data-start-fixture="${f.id}">${f.status==='completed'?'Replay':'Start'}</button><button class="outline" data-del-fixture="${f.id}">Delete</button></div></div>`).join('')||'<p class="muted">No fixtures. Create one above.</p>'}
 function renderPoints(){const rows=db.teams.map(t=>{const played=db.fixtures.filter(f=>f.status==='completed'&&(f.a===t.id||f.b===t.id));let won=0,lost=0,tied=0,nr=0,pts=0;played.forEach(f=>{if(f.result==='Match tied'){tied++;pts++}else if(f.result?.includes(t.name+' won')){won++;pts+=2}else if(f.result?.includes('No Result')){nr++;pts++}else lost++});return {t,played:played.length,won,lost,tied,nr,pts,nrr:'—'}}).sort((a,b)=>b.pts-a.pts||b.won-a.won);$('pointsBody').innerHTML=rows.map((r,n)=>`<tr><td>${n+1}</td><td><strong>${esc(r.t.short||r.t.name)}</strong></td><td>${r.played}</td><td>${r.won}</td><td>${r.lost}</td><td>${r.tied}</td><td>${r.nr}</td><td><strong>${r.pts}</strong></td><td>${r.nrr}</td></tr>`).join('')}
-function render(){renderSelectors();renderLive();renderTeams();renderFixtures();renderPoints();$('tournamentName').value=db.settings.name;$('defaultOvers').value=String(db.settings.overs);$('maxXI').value=String(db.settings.maxXI);$('storageBadge').textContent=(window.AGCC_CONFIG?.supabaseUrl && window.AGCC_CONFIG?.supabaseAnonKey && !window.AGCC_CONFIG.supabaseAnonKey.includes('PASTE_'))?'SUPABASE READY':'LOCAL MODE';$('dbStatus').textContent=(window.AGCC_CONFIG?.supabaseUrl && window.AGCC_CONFIG?.supabaseAnonKey && !window.AGCC_CONFIG.supabaseAnonKey.includes('PASTE_'))?'SUPABASE CONFIGURED':'DATABASE NOT CONFIGURED';}
+function render(){renderSelectors();renderLive();renderTeams();renderFixtures();renderPoints();$('tournamentName').value=db.settings.name;$('defaultOvers').value=String(db.settings.overs);$('maxXI').value=String(db.settings.maxXI);$('storageBadge').textContent=isCloudConfigured()?(isAdmin()?'CLOUD · ADMIN':'CLOUD · READ ONLY'):'LOCAL MODE';$('dbStatus').textContent=isCloudConfigured()?'SUPABASE CONFIGURED':'DATABASE NOT CONFIGURED';document.body.classList.toggle('read-only',isCloudConfigured()&&!isAdmin());const adminOnly=['newMatchBtn','batTeam','bowlTeam','strikerSelect','nonStrikerSelect','bowlerSelect','wicketBtn','undoBtn','swapStrikeBtn','endInningsBtn','clearHistoryBtn','teamName','teamShort','playerName','playerRole','playerTeam','squadTeam','fixtureTitle','fixtureA','fixtureB','fixtureOvers','tournamentName','defaultOvers','maxXI','resetAllBtn','importFile'];adminOnly.forEach(id=>{const el=$(id);if(el)el.disabled=isCloudConfigured()&&!isAdmin()});['teamForm','playerForm','fixtureForm','settingsForm'].forEach(id=>{const el=$(id);if(el)el.querySelectorAll('button').forEach(b=>b.disabled=isCloudConfigured()&&!isAdmin())});$('shareBtn').disabled=false;$('shareTournamentBtn').disabled=false;}
 function showView(name){document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===`view-${name}`));document.querySelectorAll('.tab').forEach(v=>v.classList.toggle('active',v.dataset.view===name));if(name==='live')renderLive()}
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
 document.querySelectorAll('[data-run]').forEach(b=>b.addEventListener('click',()=>recordRuns(Number(b.dataset.run))));
@@ -110,7 +116,10 @@ $('settingsForm').addEventListener('submit',e=>{e.preventDefault();db.settings.n
 $('exportBtn').addEventListener('click',()=>{const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='agcc-scorer-backup.json';a.click();URL.revokeObjectURL(url);toast('Backup downloaded')});
 $('importFile').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{const parsed=JSON.parse(await f.text());if(!parsed.teams||!parsed.fixtures)throw Error();db=parsed;save();render();toast('Backup restored')}catch{toast('Invalid backup JSON')}e.target.value=''});
 $('resetAllBtn').addEventListener('click',()=>{if(!confirm('সব দল, খেলোয়াড়, ম্যাচ ও সেটিংস মুছে ফেলবেন?'))return;db=defaultState();undoStack=[];save();render();toast('App data reset')});
-$('shareBtn').addEventListener('click',async()=>{const m=getMatch(),i=inns(),txt=`${db.settings.name}\n${teamLabel(i.teamId)} ${i.runs}/${i.wickets} (${overText(i.balls)} overs)\n${m.target?'Target: '+m.target+'\n':''}${teamLabel(i.oppId)}\n${m.result||'Live Score'}\n${location.href}`;try{if(navigator.share)await navigator.share({title:'AGCC Live Score',text:txt,url:location.href});else if(navigator.clipboard){await navigator.clipboard.writeText(txt);toast('Score copied to clipboard')}else prompt('Copy score',txt)}catch{}});
+function publicUrl(view){const u=new URL('user-view.html',location.href);u.searchParams.set('view',view);if(view==='match'&&getMatch()?.id)u.searchParams.set('match',getMatch().id);return u.href}
+async function shareText(title,text,url){try{if(navigator.share)await navigator.share({title,text,url});else if(navigator.clipboard){await navigator.clipboard.writeText(`${text}\n${url}`);toast('Share link কপি হয়েছে')}else prompt('লিংক কপি করো',`${text}\n${url}`)}catch{}}
+$('shareBtn').addEventListener('click',async()=>{const m=getMatch(),i=inns(),url=publicUrl('match'),txt=`${db.settings.name}\n${teamLabel(i.teamId)} ${i.runs}/${i.wickets} (${overText(i.balls)} overs)\n${m.target?'Target: '+m.target+'\n':''}${teamLabel(i.oppId)}\n${m.result||'Live Score'}`;await shareText('AGCC Live Match',txt,url)});
+$('shareTournamentBtn').addEventListener('click',async()=>{const url=publicUrl('tournament');await shareText(db.settings.name,'AGCC Tournament: Live score, all matches, teams and points table',url)});
 $('authForm')?.addEventListener('submit',async e=>{
   e.preventDefault();
   if(!cloudClient)return toast('config.js-এ Supabase URL ও anon key বসাও');
@@ -126,4 +135,5 @@ $('signOutBtn')?.addEventListener('click',async()=>{
   cloudSession=null;setAuthStatus('NOT SIGNED IN');toast('Signed out');
 });
 render();
+if(new URLSearchParams(location.search).get('view')==='user'){location.replace('user-view.html?view=tournament')}
 initCloud();

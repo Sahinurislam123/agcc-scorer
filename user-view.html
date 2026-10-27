@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#10131b"><title>AGCC Live Score | Public View</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="public-page">
+<header class="topbar public-topbar">
+  <div class="logo">AGCC<span>26</span></div>
+  <div class="brand"><h1>AGCC SCORER</h1><p>Arati Gram Cricket Carnival · Public View</p></div>
+  <div class="header-actions"><span id="publicStatus" class="badge">CONNECTING</span><button id="sharePublicMatch" class="outline">↗ Share Live Match</button><button id="sharePublicTournament" class="outline">↗ Share Tournament</button></div>
+</header>
+<nav class="tabs public-tabs"><button class="tab active" data-public-tab="overview">Overview</button><button class="tab" data-public-tab="matches">All Matches</button><button class="tab" data-public-tab="teams">Teams & Players</button><button class="tab" data-public-tab="points">Points Table</button></nav>
+<main class="container">
+  <section id="public-overview" class="public-section active">
+    <div class="page-heading"><div><p class="eyebrow">LIVE MATCH CENTRE</p><h2 id="tournamentTitle">AGCC Tournament</h2><p class="muted">Public view · Read-only</p></div><span id="liveBadge" class="live-tag">● WAITING FOR SCORE</span></div>
+    <section id="publicLiveCard" class="score-card"><div class="muted">Supabase থেকে স্কোর লোড হচ্ছে…</div></section>
+    <div class="two-col"><section class="panel"><div class="panel-title"><h3>Batting Scorecard</h3><span class="muted" id="inningsLabel">Current innings</span></div><div id="publicBatters" class="table-wrap"></div></section><section class="panel"><div class="panel-title"><h3>Bowling Figures</h3><span class="muted">Current innings</span></div><div id="publicBowlers" class="table-wrap"></div></section></div>
+    <section class="panel history-panel"><div class="panel-title"><h3>Ball-by-ball</h3><span class="muted">Latest deliveries</span></div><div id="publicHistory" class="ball-history"></div></section>
+    <section class="panel history-panel"><div class="panel-title"><h3>Recent / Scheduled Matches</h3><button class="outline" data-open-tab="matches">View all</button></div><div id="overviewMatches" class="entity-list"></div></section>
+  </section>
+  <section id="public-matches" class="public-section"><div class="page-heading"><div><p class="eyebrow">TOURNAMENT SCHEDULE</p><h2>All Matches</h2></div><button id="shareMatchesPage" class="outline">↗ Share Tournament</button></div><section class="panel"><div id="allMatches" class="entity-list"></div></section></section>
+  <section id="public-teams" class="public-section"><div class="page-heading"><div><p class="eyebrow">SQUADS</p><h2>Teams & Players</h2></div></div><div id="publicTeams" class="two-col"></div></section>
+  <section id="public-points" class="public-section"><div class="page-heading"><div><p class="eyebrow">LEAGUE STANDINGS</p><h2>Points Table</h2></div></div><section class="panel"><div class="table-wrap"><table><thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>L</th><th>T/NR</th><th>Pts</th></tr></thead><tbody id="publicPoints"></tbody></table></div><p class="note">Points: Win 2, Tie/No Result 1, Loss 0. This table reflects results stored in the current tournament state.</p></section></section>
+  <footer class="public-footer"><span>AGCC · Arati Gram Cricket Carnival</span><span>Public read-only scoreboard</span><a href="index.html">Admin / Scorer Login</a></footer>
+</main>
+<div id="publicToast" class="toast" role="status"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="user.js"></script>
+</body></html>

@@ -1,40 +1,28 @@
-# AGCC Scorer — AGCC 2026/2027
+# AGCC Scorer — Admin Scorer + Public User View
 
-Mobile-first cricket tournament scorer for GitHub Pages, with Supabase Auth, shared cloud scoreboard state and Realtime updates.
+Mobile-first static cricket scorer for Arati Gram Cricket Carnival. Deploy the files in this folder to the root of the GitHub Pages repository.
 
-## Features
-- Live scoreboard, overs, run rate, target, ball-by-ball history
-- Batter and bowler scorecards
-- Runs 0–6, wides, no-balls, byes, leg-byes, penalty, wicket-type selection
-- Undo last recorded action (current browser session)
-- Team and player management, Playing XI selection
-- Fixtures, results and points table
-- Share score, export/import JSON backup
-- Supabase email/password admin login; only `app_metadata.role = admin` can write shared cloud state
-- Supabase Realtime updates for visitors viewing the same scoreboard
+## Pages
+- `index.html` — scorer/admin page. Supabase admin-role users can edit scores and tournament data.
+- `user-view.html` — public read-only view for live score, scorecard, ball history, all saved fixtures, teams/players, points table, and sharing links.
+- Share Live Match and Share Tournament buttons create public links that work on GitHub Pages.
 
-## Before uploading to GitHub Pages
-1. Open `config.js`.
-2. Keep the provided Supabase URL. Replace `PASTE_YOUR_EXISTING_SUPABASE_PUBLISHABLE_KEY_HERE` with the **publishable/anon key** from Supabase Project Settings → API Keys. Never use a `service_role` or secret key in browser code.
-3. Confirm `public.app_state` exists, RLS is enabled, and its SELECT policy is public while INSERT/UPDATE policies allow only authenticated users whose `app_metadata.role` is `admin`.
-4. In Supabase Auth, create the admin user. In that user's **app_metadata** set `role` to `admin` (not user-editable `user_metadata`).
-5. Ensure `app_state` is included in the `supabase_realtime` publication.
-6. Upload all six files (`index.html`, `style.css`, `app.js`, `config.js`, `supabase-schema.sql`, `README.md`) to the repository root. Commit changes, then open the GitHub Pages URL.
-7. Open Admin → Admin Login and sign in. On first admin sign-in, if no cloud snapshot exists, the current app state is uploaded as the initial shared snapshot.
+## Supabase setup
+1. Open `config.js` and retain your project's Supabase URL and **publishable/anon key**. Never place a `service_role` or secret key in browser code.
+2. In Supabase, make sure `public.app_state` exists and its SELECT RLS policy permits public read (`using (true)`). Admin insert/update policies should check `auth.jwt() -> 'app_metadata' ->> 'role' = 'admin'`.
+3. In Supabase Auth, create the admin user, then set its **app_metadata** role to `admin` using a trusted server-side/admin method. Do not use user-editable `user_metadata` for authorization.
+4. In Supabase Dashboard > Database > Publications, enable `app_state` in `supabase_realtime`.
+5. Ensure the `app_state` table is in the `public` schema, with `id = 'main'` and a JSONB `state` column.
+6. Deploy all files in the repository root. GitHub Pages should serve `index.html` as the default page.
 
-## Important data behaviour
-- `app_state` is the shared cloud snapshot. Visitors can read it and receive Realtime updates; only an admin account can save changes to cloud.
-- A visitor's local browser may still hold its own cache. Admin sign-in pulls the current cloud snapshot.
-- The supplied database schema creates the underlying cricket tables and `app_state`; this frontend currently uses `app_state` as its shared application snapshot rather than writing each delivery into the normalized `teams/players/matches/innings/deliveries` tables.
-- Wicket type is recorded. For Run Out/Mankad, confirm the dismissed batter using the batter selector; advanced run-out crossing/strike logic is not yet a full official scorer implementation.
-- Undo history is kept in memory and resets on page refresh. Export a JSON backup before major changes.
-- External Supabase JS CDN and Google Fonts require an internet connection.
+## Public sharing
+- Tournament: `user-view.html?view=tournament`
+- Live match: `user-view.html?view=match&match=<current-match-id>`
 
-## If Supabase login fails
-- Confirm the publishable/anon key is copied correctly into `config.js`.
-- Confirm email/password login is enabled and the user exists.
-- Check that `app_metadata.role` is exactly `admin` for the scorer account.
-- Check RLS policies on `app_state`; do not disable RLS to make the app work.
+The public page never renders score-edit controls. It reads the shared `app_state` snapshot and listens to Supabase Realtime changes. Public visibility requires the public SELECT policy and correct Supabase configuration.
 
-## GitHub Pages
-Repository → Settings → Pages → Deploy from a branch → `main` → `/(root)` → Save.
+## Important notes
+- The app currently stores the tournament as a single `app_state` JSON snapshot. The live match scorecard is the current match stored in that snapshot; the fixtures list retains fixture status/results. This is not a database of permanent scorecards for every past match yet.
+- Public user view is read-only. In cloud-configured mode, the admin scorer blocks write actions unless the current Supabase session has `app_metadata.role = admin`. RLS remains the actual security boundary.
+- A local-only browser mode is useful for testing but does not sync across devices. Set a valid publishable key to enable cloud mode.
+- Verify the actual Supabase URL/key, RLS policies, admin role, and Realtime publication in your project before relying on it for a live event. This package has not been authenticated against your live Supabase project from this environment.
