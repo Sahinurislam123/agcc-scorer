@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1320"><title>AGCC Scorer | AGCC 2026</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="logo">AGCC<span>26</span></div>
+  <div class="brand"><h1>AGCC SCORER</h1><p>Arati Gram Cricket Carnival</p></div>
+  <div class="header-actions"><span id="storageBadge" class="badge">LOCAL MODE</span><button id="shareBtn" class="outline">↗ Share</button></div>
+</header>
+<nav class="tabs" aria-label="Main navigation">
+  <button class="tab active" data-view="live">Live Scoring</button><button class="tab" data-view="teams">Teams & Players</button><button class="tab" data-view="fixtures">Fixtures</button><button class="tab" data-view="points">Points Table</button><button class="tab" data-view="admin">Admin</button>
+</nav>
+<main class="container">
+  <section id="view-live" class="view active">
+    <div class="page-heading"><div><p class="eyebrow">MATCH CENTER</p><h2>Live Scoreboard</h2></div><button class="primary" id="newMatchBtn">＋ New Match</button></div>
+    <div class="score-card">
+      <div class="score-top"><span id="matchTag" class="live-tag">● READY TO START</span><span id="matchFormat" class="pill">5 OVERS</span></div>
+      <div class="score-teams">
+        <div><label>Batting team</label><select id="batTeam"></select></div><div class="vs">VS</div><div><label>Bowling team</label><select id="bowlTeam"></select></div>
+      </div>
+      <div class="big-score"><div><strong id="totalScore">0/0</strong><p id="overText">0.0 overs</p></div><div class="rr"><span>RUN RATE</span><strong id="runRate">0.00</strong></div></div>
+      <div class="score-details"><div><span>Target</span><b id="targetText">—</b></div><div><span>CRR</span><b id="crrText">0.00</b></div><div><span>Balls left</span><b id="ballsLeft">30</b></div><div><span>Innings</span><b id="inningsText">1st</b></div></div>
+      <div id="resultBanner" class="result-banner hidden"></div>
+    </div>
+    <div class="two-col">
+      <section class="panel">
+        <div class="panel-title"><h3>Score Controls</h3><span class="muted">Tap to record</span></div>
+        <div class="run-grid"><button data-run="0">0</button><button data-run="1">1</button><button data-run="2">2</button><button data-run="3">3</button><button class="boundary" data-run="4">4</button><button class="boundary" data-run="6">6</button></div>
+        <div class="extras-grid"><button data-extra="wide">Wide <small>+1</small></button><button data-extra="noball">No Ball <small>+1</small></button><button data-extra="bye">Bye</button><button data-extra="legbye">Leg Bye</button><button data-extra="penalty">Penalty</button></div>
+        <div class="actions"><button id="wicketBtn" class="danger">✕ WICKET</button><button id="undoBtn" class="secondary">↶ Undo</button></div>
+        <div class="mini-actions"><button id="swapStrikeBtn" class="outline">⇄ Swap Strike</button><button id="endInningsBtn" class="outline">End / Next Innings</button></div>
+        <p class="note">Wide ও No Ball-এ বল গণনা হয় না। No Ball-এর সঙ্গে ব্যাটসম্যানের রান যোগ করতে আগে No Ball রেকর্ড করে পরে রান বোতাম ব্যবহার করো। Wicket বোতাম একটি বৈধ বল ও উইকেট যোগ করে।</p>
+      </section>
+      <section class="panel">
+        <div class="panel-title"><h3>Batters</h3><span class="muted">Runs (Balls)</span></div>
+        <div id="battersTable" class="table-wrap"></div>
+        <div class="panel-title subhead"><h3>Bowler</h3><span class="muted">Current spell</span></div>
+        <div id="bowlerTable" class="table-wrap"></div>
+        <div class="select-row"><label>Striker<select id="strikerSelect"></select></label><label>Non-striker<select id="nonStrikerSelect"></select></label><label>Bowler<select id="bowlerSelect"></select></label></div>
+      </section>
+    </div>
+    <section class="panel history-panel"><div class="panel-title"><h3>Ball-by-ball</h3><button id="clearHistoryBtn" class="text-button">Clear list</button></div><div id="ballHistory" class="ball-history"><span class="muted">No deliveries yet.</span></div></section>
+  </section>
+
+  <section id="view-teams" class="view">
+    <div class="page-heading"><div><p class="eyebrow">SQUAD MANAGEMENT</p><h2>Teams & Players</h2></div></div>
+    <div class="two-col">
+      <section class="panel"><h3>Create team</h3><form id="teamForm" class="form-stack"><label>Team name<input id="teamName" required placeholder="e.g. Arati Knight Riders"></label><label>Short name<input id="teamShort" maxlength="5" placeholder="AKR"></label><button class="primary">Add Team</button></form><div id="teamsList" class="entity-list"></div></section>
+      <section class="panel"><h3>Add player</h3><form id="playerForm" class="form-stack"><label>Team<select id="playerTeam"></select></label><label>Player name<input id="playerName" required placeholder="Player full name"></label><label>Role<select id="playerRole"><option>Batter</option><option>Bowler</option><option>All-rounder</option><option>Wicketkeeper</option></select></label><button class="primary">Add Player</button></form><div class="panel-title subhead"><h3>Squad / Playing XI</h3></div><label class="full-label">Choose team<select id="squadTeam"></select></label><div id="squadList" class="entity-list"></div><p class="note">Playing XI বাছতে প্লেয়ারের পাশে Playing XI চেকবক্স ব্যবহার করো।</p></section>
+    </div>
+  </section>
+
+  <section id="view-fixtures" class="view">
+    <div class="page-heading"><div><p class="eyebrow">TOURNAMENT MODE</p><h2>Fixtures & Results</h2></div></div>
+    <section class="panel"><h3>Create fixture</h3><form id="fixtureForm" class="fixture-form"><label>Match title<input id="fixtureTitle" placeholder="League Match 1"></label><label>Team A<select id="fixtureA"></select></label><label>Team B<select id="fixtureB"></select></label><label>Overs<select id="fixtureOvers"><option>5</option><option>10</option><option>20</option></select></label><button class="primary">Add Fixture</button></form></section>
+    <section class="panel"><div class="panel-title"><h3>Scheduled matches</h3><span class="muted">Tap Start to load teams</span></div><div id="fixturesList" class="entity-list"></div></section>
+  </section>
+
+  <section id="view-points" class="view">
+    <div class="page-heading"><div><p class="eyebrow">LEAGUE STANDINGS</p><h2>Points Table</h2></div><button id="refreshPoints" class="outline">↻ Refresh</button></div>
+    <section class="panel"><div class="table-wrap"><table><thead><tr><th>#</th><th>Team</th><th>Played</th><th>Won</th><th>Lost</th><th>Tied</th><th>NR</th><th>Points</th><th>NRR</th></tr></thead><tbody id="pointsBody"></tbody></table></div><p class="note">Points: Win 2, Tie/No Result 1, Loss 0. NRR is calculated from completed fixtures where score data is available.</p></section>
+  </section>
+
+  <section id="view-admin" class="view">
+    <div class="page-heading"><div><p class="eyebrow">CONTROL ROOM</p><h2>Admin & Data</h2></div></div>
+    <div class="two-col">
+      <section class="panel"><h3>Match settings</h3><form id="settingsForm" class="form-stack"><label>Tournament name<input id="tournamentName" value="ARATI GRAM CRICKET CARNIVAL"></label><label>Default overs<select id="defaultOvers"><option>5</option><option>10</option><option>20</option></select></label><label>Maximum Playing XI<select id="maxXI"><option>11</option><option>8</option><option>7</option></select></label><button class="primary">Save Settings</button></form><p class="note">Admin section currently has no login protection. Do not publish private information here.</p></section>
+      <section class="panel"><h3>Backup & restore</h3><p class="muted">Export teams, players, fixtures and current match as a JSON backup. Import it later on this device or another one.</p><div class="actions"><button id="exportBtn" class="primary">Export JSON</button><label class="file-button">Import JSON<input id="importFile" type="file" accept="application/json"></label></div><button id="resetAllBtn" class="danger full-width">Reset all app data</button><div class="divider"></div><h3>Online database (optional)</h3><p class="note">GitHub Pages static hosting-এর জন্য Supabase-এর মতো external database দরকার। এই ZIP-এ SQL schema ও setup guide আছে; credentials না দিলে অ্যাপ local mode-এ চলবে।</p><span id="dbStatus" class="badge">DATABASE NOT CONFIGURED</span></section>
+    </div>
+  </section>
+</main>
+<div id="toast" class="toast" role="status"></div>
+<script src="config.js"></script><script src="app.js"></script>
+</body></html>
